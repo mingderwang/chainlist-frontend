@@ -1,42 +1,39 @@
 import { Suspense } from "react";
 import { Provider, atom, useAtom } from "jotai";
-import { a, useSpring } from "@react-spring/web";
+import JSONPretty from 'react-json-pretty';
 
-const postId = atom(9001);
+const postId = atom(0);
 const postData = atom(async (get) => {
-  const id = get(postId);
+  const id: number = get(postId);
   const response = await fetch(
-    `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+    `https://example-steel-ten.vercel.app/api/v1/chainlist/${id}`
   );
   return await response.json();
 });
 
-function Id() {
-  const [id] = useAtom(postId);
-  const props = useSpring({ from: { id: 0 }, id, reset: true });
-  return <a.h1>{props.id.to(Math.round)}</a.h1>;
-}
-
 function Next() {
   const [, set] = useAtom(postId);
   return (
+    <>
     <button onClick={() => set((x) => x + 1)}>
-      <div>→</div>
+      <div>👉</div>
     </button>
+    </>
   );
 }
 
 function PostTitle() {
   // This throws an expection that's caught by Reacts suspense boundary
-  const [{ by, title, url, text, time }] = useAtom(postData);
+  const [{ meta }] = useAtom(postData);
   // And by the time we're here the data above is available
   return (
     <>
-      <h2>{by}</h2>
-      <h6>{new Date(time * 1000).toLocaleDateString("en-US")}</h6>
-      {title && <h4>{title}</h4>}
-      <a href={url}>{url}</a>
-      <p>{text}</p>
+      <h1> {meta.id}</h1>
+      <h2>🦄 {meta.name}</h2>
+      <a target="_blank" href={`${meta.blockExplorers.default.url}`}>
+      {meta.blockExplorers.default.url}
+      </a>
+      <JSONPretty id="json-pretty" data={meta.nativeCurrency}></JSONPretty>
     </>
   );
 }
@@ -45,13 +42,12 @@ export default function App() {
   return (
     <>
     <Provider>
-      <Id />
+      <Next />
       <div>
         <Suspense fallback={<h2>Loading...</h2>}>
           <PostTitle />
         </Suspense>
       </div>
-      <Next />
     </Provider>
     </>
   );
